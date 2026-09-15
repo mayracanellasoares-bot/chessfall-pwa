@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#07090f">
+<meta name="description" content="CHESSFALL: puzzle neon de queda, fusão e evolução de peças de xadrez.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CHESSFALL">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>CHESSFALL — Evolução e Linhas</title>
+<style>
+:root{--bg:#07090f;--panel:#111621;--line:#293246;--text:#f4f6fb;--muted:#8f99ad;--gold:#f5c451;--danger:#ff6470;--ok:#62e6a4}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+body{display:flex;justify-content:center}.app{width:min(100%,520px);height:100%;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom);gap:7px}
+.top{display:grid;grid-template-columns:1.2fr .8fr .8fr 1fr;gap:5px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:6px 3px;text-align:center}.stat span{display:block;color:var(--muted);font-size:8px;letter-spacing:.7px}.stat b{display:block;font-size:15px;line-height:18px}
+.modebar{display:flex;gap:8px;margin:14px 0 8px}.modebar button{flex:1;padding:12px 7px;border-radius:9px;background:#151b29;color:var(--muted);font-size:11px;font-weight:900}.modebar button.active{color:var(--gold);outline:1px solid #5d4b1d;background:#252b39}
+.game{position:relative;flex:1;min-height:0;display:flex;justify-content:center;align-items:center}.boardWrap{height:min(100%,690px);aspect-ratio:8/13;max-width:100%;position:relative}
+canvas{width:100%;height:100%;display:block;border:1px solid #30394d;border-radius:15px;background:#090c14;box-shadow:0 20px 55px #0009;touch-action:none}
+.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;background:#05070cd9;border-radius:15px}.card{width:min(92%,340px);background:#111722;border:1px solid #354057;border-radius:17px;padding:21px;text-align:center;box-shadow:0 20px 70px #000b}.card h1{margin:0 0 5px;font-size:29px}.card p{margin:7px 0 17px;color:#aeb7c8;font-size:12px;line-height:1.5}.primary{width:100%;padding:12px;border-radius:11px;background:var(--gold);color:#17130a;font-weight:950}
+.controls{display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:6px}.controls button{padding:11px 5px;border-radius:11px;background:#151b29;border:1px solid var(--line);font-weight:950}.controls button:active{transform:scale(.97)}
+.help{text-align:center;min-height:14px;color:var(--muted);font-size:9px}.badge{color:var(--gold);font-weight:900}
+@media(max-height:650px){.app{gap:4px}.stat{padding:3px}.controls button{padding:8px}.modebar button{padding:6px}}
+</style>
+
+<style id="electronika60-skin">
+:root{
+  --e60-bg:#05080d;
+  --e60-panel:#0a111a;
+  --e60-panel2:#0d1823;
+  --e60-cyan:#00e5ff;
+  --e60-blue:#168cff;
+  --e60-yellow:#ffe600;
+  --e60-orange:#ff7a00;
+  --e60-green:#b6ff00;
+  --e60-magenta:#ff19c8;
+  --e60-white:#f2fbff;
+  --e60-muted:#7393a8;
+  --e60-grid:#173445;
+  --e60-danger:#ff3158;
+}
+html,body{
+  background:
+    radial-gradient(circle at 50% 0%,#102235 0%,#05080d 48%,#020306 100%) !important;
+  color:var(--e60-white) !important;
+}
+body{
+  font-family: "Courier New", monospace !important;
+  letter-spacing:.04em;
+}
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:9999;
+  opacity:.12;
+  background:repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 3px,
+    #00e5ff 4px,
+    transparent 5px
+  );
+  mix-blend-mode:screen;
+}
+button{
+  font-family:"Courier New",monospace !important;
+  font-weight:900 !important;
+  text-transform:uppercase;
+  color:var(--e60-white) !important;
+  background:linear-gradient(180deg,#132536,#08111a) !important;
+  border:2px solid var(--e60-cyan) !important;
+  box-shadow:
+    0 0 0 1px #061018 inset,
+    0 0 9px rgba(0,229,255,.22) !important;
+  border-radius:5px !important;
+}
+button:active{
+  transform:translateY(1px);
+  background:linear-gradient(180deg,#0b5365,#07131b) !important;
+  box-shadow:0 0 16px rgba(0,229,255,.55) !important;
+}
+#board,.board,#gameBoard,.game-board{
+  background-color:#061018 !important;
+  border:3px solid var(--e60-cyan) !important;
+  box-shadow:
+    0 0 0 2px #07121b,
+    0 0 22px rgba(0,229,255,.25),
+    inset 0 0 28px rgba(0,0,0,.8) !important;
+}
+.cell,.grid-cell{
+  border-color:var(--e60-grid) !important;
+  background:rgba(5,15,23,.72) !important;
+}
+canvas{
+  filter:drop-shadow(0 0 7px rgba(0,229,255,.16));
+}
+h1,h2,h3,.title{
+  color:var(--e60-cyan) !important;
+  text-shadow:0 0 8px rgba(0,229,255,.65);
+  letter-spacing:.1em;
+}
+.score,.record,.best,#score,#best{
+  color:var(--e60-yellow) !important;
+  text-shadow:0 0 9px rgba(255,230,0,.55);
+}
+.level,#level{
+  color:var(--e60-green) !important;
+  text-shadow:0 0 8px rgba(182,255,0,.45);
+}
+.combo,#combo{
+  color:var(--e60-magenta) !important;
+  text-shadow:0 0 10px rgba(255,25,200,.55);
+}
+.fever,#fever{
+  color:var(--e60-orange) !important;
+  text-shadow:0 0 10px rgba(255,122,0,.6);
+}
+.next,.next-piece{
+  border-color:var(--e60-yellow) !important;
+  background:#08121a !important;
+  box-shadow:0 0 12px rgba(255,230,0,.18) !important;
+}
+.stat,.panel,.hud,.menu,.info,.card{
+  background:linear-gradient(180deg,rgba(13,24,35,.95),rgba(5,10,15,.95)) !important;
+  border-color:#24546a !important;
+}
+.progress,.meter,.bar{
+  background:#03070a !important;
+  border:1px solid #275064 !important;
+}
+.progress > *, .meter > *, .bar > *{
+  box-shadow:0 0 10px currentColor !important;
+}
+.badge,.mode,.tag{
+  border:1px solid var(--e60-cyan) !important;
+  color:var(--e60-cyan) !important;
+  background:#06131c !important;
+}
+.overlay,.modal{
+  background:rgba(2,5,8,.94) !important;
+  border:2px solid var(--e60-cyan) !important;
+  box-shadow:0 0 35px rgba(0,229,255,.25) !important;
+}
+small,.muted,.hint{
+  color:var(--e60-muted) !important;
+}
+</style>
+<script>
+/* Electronika60 palette for chess pieces. */
+window.E60_COLORS = {
+  pawn:"#00e5ff",
+  knight:"#b6ff00",
+  bishop:"#ffe600",
+  rook:"#ff7a00",
+  queen:"#ff19c8",
+  king:"#f2fbff"
+};
+</script>
+
+<style>
+.app{height:100dvh;min-height:0}.top,.modebar,.controls,.help{flex-shrink:0}
+#fullscreen{flex:0 0 42px}.overlay{overflow:auto}.card{max-height:100%;overflow:auto}
+.app{filter:drop-shadow(0 0 24px #00d9ff18)}
+.top{gap:7px}
+.stat{border-color:#16738f!important;background:linear-gradient(180deg,#0a1b29,#050a11)!important;box-shadow:inset 0 0 16px #00d9ff12,0 0 10px #00d9ff12}
+.stat span{color:#6da9bc}.stat b{font-family:"Courier New",monospace;text-shadow:0 0 9px currentColor}
+.stat:nth-child(1) b{color:#ffe65c}.stat:nth-child(2) b{color:#ff42ce}.stat:nth-child(3) b{color:#9dff3f}.stat:nth-child(4) b{color:#00e5ff}
+.boardWrap::before{content:"";position:absolute;inset:-4px;border-radius:18px;pointer-events:none;border:1px solid #00e5ff;box-shadow:0 0 9px #00e5ffaa,0 0 28px #0077ff66,inset 0 0 12px #00e5ff55;z-index:2}
+canvas{border-color:#00e5ff!important;background:#030711!important;box-shadow:0 0 18px #00e5ff55,0 20px 55px #000!important}
+.controls button,#pause,#fullscreen{border-color:#00dfff!important;box-shadow:inset 0 0 12px #00dfff18,0 0 9px #00dfff35!important}
+.controls button:nth-child(2){border-color:#ffe600!important;color:#ffe600!important;box-shadow:inset 0 0 12px #ffe60018,0 0 9px #ffe60035!important}
+#pause{border-color:#ff42ce!important;color:#ff8de3!important}
+button:disabled{opacity:.38;filter:saturate(.35);cursor:not-allowed;box-shadow:none!important}
+.overlay{background:rgba(1,4,10,.91)!important;backdrop-filter:blur(3px)}
+.card{border-color:#00e5ff!important;box-shadow:0 0 15px #00e5ff55,0 0 45px #0055ff33!important}
+.help{color:#66bed4;text-shadow:0 0 7px #00e5ff66}
+@media(orientation:landscape) and (max-height:600px){
+ .app{width:100%;display:grid;grid-template-columns:180px minmax(0,1fr) 130px;grid-template-rows:auto 1fr auto;gap:8px}
+ .top{grid-column:1;grid-row:1;grid-template-columns:1fr 1fr}
+ .modebar{grid-column:1;grid-row:2;flex-direction:column;align-self:start}
+ .game{grid-column:2;grid-row:1/4;height:100%}
+ .controls{grid-column:3;grid-row:1/3;grid-template-columns:1fr;align-self:center}
+ .help{grid-column:3;grid-row:3}.card{padding:10px}.card h1{font-size:18px}.card p{font-size:10px}
+}
+</style></head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="stat"><span>PONTOS</span><b id="score">0</b></div>
+    <div class="stat"><span>LINHAS</span><b id="combo">0</b></div>
+    <div class="stat"><span>NÍVEL</span><b id="level">1</b></div>
+    <div class="stat"><span>RECORDE</span><b id="best">0</b></div>
+  </div>
+  <div class="modebar">
+    <button id="pause" aria-label="Pausar jogo" disabled>⏸ PAUSAR</button>
+    <button id="fullscreen" aria-label="Tela inteira">⛶ TELA INTEIRA</button>
+  </div>
+  <div class="game">
+    <div class="boardWrap">
+      <canvas id="game"></canvas>
+      <div id="overlay" class="overlay">
+        <div class="card">
+          <h1>CHESSFALL</h1>
+          <p><span class="badge">EVOLUÇÃO E LINHAS</span><br><br>
+          Conecte <b>3 ou mais peças iguais</b> pelos lados para evoluir: ♟ → ♞ → ♝ → ♜ → ♛ → ♚. Grupos em L também valem.
+          <br><br>Fusões e linhas dão pontos pela escala: <b>100 / 300 / 500 / 800 × nível</b>. Nas fusões, isso corresponde a grupos de 3 / 4 / 5 / 6 ou mais peças.
+          <br>Linhas completas têm prioridade sobre fusões. A cada 10 linhas, um novo nível.</p>
+          <div class="modebar" aria-label="Escolha o modo de jogo">
+            <button id="arcade" class="active">ARCADE<br>60 SEGUNDOS</button>
+            <button id="marathon">MARATONA<br>SEM TEMPO</button>
+          </div>
+          <button class="primary" id="start">COMEÇAR ARCADE</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="controls">
+    <button id="left">◀</button>
+    <button id="drop">▼ QUEDA RÁPIDA</button>
+    <button id="right">▶</button>
+  </div>
+  <div class="help" id="help">Fase 4 · sobreviva à velocidade e mantenha o combo</div>
+</div>
+
+<script>
+(()=>{'use strict';
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const scoreEl=document.getElementById('score'),comboEl=document.getElementById('combo'),levelEl=document.getElementById('level'),bestEl=document.getElementById('best');
+const overlay=document.getElementById('overlay'),startBtn=document.getElementById('start');
+const arcadeBtn=document.getElementById('arcade'),marathonBtn=document.getElementById('marathon'),help=document.getElementById('help');
+const pauseBtn=document.getElementById('pause');
+
+const C=8,R=13;
+const S=['♟','♞','♝','♜','♛','♚'];
+const COLORS=['#00e5ff','#9dff3f','#ffe600','#ff8a22','#ff42ce','#f5fbff'];
+const LINE_POINTS=[0,100,300,500,800];
+
+let W=0,H=0,cell=0,ox=0,oy=0,dpr=1;
+let board=empty(),fall={t:0,x:3,y:0},next=0;
+let score=0,best=0,drops=0,lines=0;
+const bestKey='chessfall-lines-v1';
+try{const saved=Number(localStorage.getItem(bestKey));if(Number.isSafeInteger(saved)&&saved>=0)best=saved}catch{}
+let combo=0,maxCombo=0,chain=0,maxChain=0,level=1;
+let mode='arcade',timeLeft=60,running=false,paused=false,last=0,fallClock=0,fallMs=1050;
+let flash='',flashTime=0,particles=[],shake=0,resolving=false;
+let fever=0,streak=0,maxStreak=0,nearRecord=false;
+let raf=0;
+let audioCtx=null;
+
+function ensureAudio(){
+  if(audioCtx)return audioCtx;
+  const AudioCtor=window.AudioContext||window.webkitAudioContext;
+  if(!AudioCtor)return null;
+  try{audioCtx=new AudioCtor()}catch{return null}
+  return audioCtx;
+}
+function dropFeedback(distance){
+  const ac=ensureAudio();
+  if(ac){
+    if(ac.state==='suspended')ac.resume().catch(()=>{});
+    const now=ac.currentTime,osc=ac.createOscillator(),gain=ac.createGain();
+    osc.type='square';osc.frequency.setValueAtTime(150+Math.min(120,distance*7),now);
+    osc.frequency.exponentialRampToValueAtTime(55,now+.12);
+    gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(.16,now+.008);
+    gain.gain.exponentialRampToValueAtTime(.0001,now+.14);
+    osc.connect(gain);gain.connect(ac.destination);osc.start(now);osc.stop(now+.15);
+  }
+  if(navigator.vibrate)navigator.vibrate(distance>6?28:18);
+}
+
+bestEl.textContent=best.toLocaleString('pt-BR');
+
+function resize(){
+  const q=canvas.getBoundingClientRect();W=q.width;H=q.height;dpr=Math.min(devicePixelRatio||1,2);
+  canvas.width=Math.floor(W*dpr);canvas.height=Math.floor(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
+  cell=Math.min(W/C,H/R);ox=(W-C*cell)/2;oy=(H-R*cell)/2;draw();
+}
+new ResizeObserver(resize).observe(canvas);
+
+function empty(){return Array.from({length:R},()=>Array(C).fill(-1))}
+function rand(){return Math.floor(Math.random()*5)}
+function reset(){
+  board=empty();score=0;drops=0;lines=0;fallClock=0;combo=0;maxCombo=0;chain=0;maxChain=0;level=1;
+  timeLeft=60;fallMs=1050;flash='';flashTime=0;particles=[];shake=0;resolving=false;paused=false;
+  fever=0;streak=0;maxStreak=0;nearRecord=false;
+  fall={t:rand(),x:3,y:0};next=rand();update();
+}
+function update(){
+  scoreEl.textContent=Math.floor(score).toLocaleString('pt-BR');
+  comboEl.textContent=lines;
+  levelEl.textContent=level;
+  bestEl.textContent=best.toLocaleString('pt-BR');
+}
+function start(){
+  ensureAudio();reset();running=true;paused=false;pauseBtn.disabled=false;pauseBtn.textContent='⏸ PAUSAR';overlay.style.display='none';last=performance.now();
+  cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
+}
+function gameOver(reason){
+  running=false;paused=false;pauseBtn.disabled=true;pauseBtn.textContent='⏸ PAUSAR';
+  const isRecord=score>best;
+  if(isRecord){best=Math.floor(score);try{localStorage.setItem(bestKey,String(best))}catch{}}
+  update();
+  const record=isRecord?'NOVO RECORDE!':'Recorde: '+best.toLocaleString('pt-BR');
+  overlay.innerHTML=`<div class="card"><h1>${reason}</h1>
+  <p><b>${Math.floor(score).toLocaleString('pt-BR')} pontos</b><br>
+  nível ${level} · ${lines} linhas · ${drops} quedas
+  <br>cadeia máxima ${Math.max(0,maxChain)} · sequência ${Math.max(0,maxStreak)}
+  <br><br>${record}</p>
+  <button class="primary" id="again">JOGAR NOVAMENTE</button></div>`;
+  overlay.style.display='flex';document.getElementById('again').onclick=start;
+}
+function free(x,y){return x>=0&&x<C&&y>=0&&y<R&&board[y][x]===-1}
+function move(dx){if(running&&!paused&&!resolving&&free(fall.x+dx,fall.y))fall.x+=dx}
+function hard(){
+  if(!running||paused||resolving)return;
+  const startY=fall.y;
+  while(free(fall.x,fall.y+1))fall.y++;
+  dropFeedback(Math.max(1,fall.y-startY));
+  lock();
+}
+
+function lock(){
+  if(!free(fall.x,fall.y)){gameOver('TABULEIRO CHEIO');return}
+  fallClock=0;chain=0;
+  const {x,y,t}=fall;board[y][x]=t;drops++;
+  // Every clean landing sustains a streak. Chain/evolution pushes it much faster.
+  streak++;maxStreak=Math.max(maxStreak,streak);
+  if(streak%8===0){
+    fever=Math.min(100,fever+18);
+    flash='RITMO '+streak;flashTime=650;
+  }
+  if(!clearLines()) resolveChain(x,y,t,0);
+  clearLines();
+  if(!running)return;
+  fall={t:next,x:3,y:0};next=rand();
+  if(!free(fall.x,fall.y)){gameOver('TABULEIRO CHEIO');return}
+  // Arcade pressure: level every 10 drops, plus score milestones.
+  level=1+Math.floor(lines/10);
+  fallMs=Math.max(160,1050-(level-1)*55);
+  update();
+}
+
+/* FASE 3: reaction chain */
+function getGroup(x,y,t){
+  if(!inBoard(x,y)||board[y][x]!==t)return [];
+  const out=[],seen=new Set(),q=[[x,y]];
+  while(q.length){
+    const [a,b]=q.shift(),k=b*C+a;if(seen.has(k))continue;
+    seen.add(k);out.push([a,b]);
+    [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{
+      const nx=a+dx,ny=b+dy;
+      if(inBoard(nx,ny)&&board[ny][nx]===t&&!seen.has(ny*C+nx))q.push([nx,ny]);
+    });
+  }
+  return out;
+}
+function chooseAnchor(g){
+  return [...g].sort((a,b)=>b[1]-a[1]||Math.abs(a[0]-C/2)-Math.abs(b[0]-C/2))[0];
+}
+function resolveChain(x,y,t,depth){
+  const group=getGroup(x,y,t);
+  if(group.length<3){
+    // A failed chain breaks the combo but keeps the arcade streak alive.
+    combo=0; chain=0;
+    if(fever>0)fever=Math.max(0,fever-4);
+    return;
+  }
+  chain++;combo++;maxChain=Math.max(maxChain,chain);maxCombo=Math.max(maxCombo,combo);
+  const fusionBase=group.length===3?100:group.length===4?300:group.length===5?500:800;
+  const fusionPoints=fusionBase*level;
+  score+=fusionPoints;
+
+  group.forEach(([a,b])=>{spawnParticles(a,b,t,12);board[b][a]=-1});
+  const [ax,ay]=chooseAnchor(group);
+  collapse();
+
+  const target=Math.min(5,t+1);
+  let ty=Math.min(R-1,ay);
+  while(ty>0&&board[ty][ax]!==-1)ty--;
+  if(board[ty][ax]!==-1){
+    const p=findFree();
+    if(!p){gameOver('TABULEIRO CHEIO');return}
+    board[p[1]][p[0]]=target;
+  }else board[ty][ax]=target;
+
+  // Chain reaction is the main scoring engine.
+
+  fever=Math.min(100,fever+12+group.length*3);
+  flash=`+${fusionPoints} · ${S[t]} ×${group.length} → ${S[target]} · CADEIA ${chain}`;
+  flashTime=1100;shake=Math.min(12,3+chain*1.7);
+
+  collapse();
+  for(let yy=0;yy<R;yy++)for(let xx=0;xx<C;xx++){
+    if(board[yy][xx]===target&&getGroup(xx,yy,target).length>=3){
+      resolveChain(xx,yy,target,depth+1);return;
+    }
+  }
+  update();
+}
+function findFree(){for(let y=R-1;y>=0;y--)for(let x=0;x<C;x++)if(board[y][x]===-1)return[x,y];return null}
+function collapse(){
+  for(let x=0;x<C;x++){
+    const a=[];for(let y=R-1;y>=0;y--)if(board[y][x]>=0)a.push(board[y][x]);
+    for(let y=R-1;y>=0;y--)board[y][x]=a[R-1-y]??-1;
+  }
+}
+function inBoard(x,y){return x>=0&&x<C&&y>=0&&y<R}
+
+// Linhas e fusões usam a escala 100/300/500/800 multiplicada pelo nível.
+function lineValue(n){return Math.floor(n/4)*800+LINE_POINTS[n%4]}
+function clearLines(){
+  const full=[];
+  for(let y=0;y<R;y++)if(board[y].every(t=>t>=0))full.push(y);
+  if(!full.length)return 0;
+  const earned=lineValue(full.length)*level;
+  for(const y of full)for(let x=0;x<C;x++)spawnParticles(x,y,board[y][x],8);
+  board=board.filter((_,y)=>!full.includes(y));
+  while(board.length<R)board.unshift(Array(C).fill(-1));
+  score+=earned;lines+=full.length;level=1+Math.floor(lines/10);
+  fallMs=Math.max(160,1050-(level-1)*55);
+  flash='+'+earned+' · '+full.length+' LINHA'+(full.length>1?'S':'');flashTime=1200;
+  update();return full.length;
+}
+
+function tick(dt){
+  if(!running||paused)return;
+  if(mode==='arcade'){
+    timeLeft-=dt/1000;
+    if(timeLeft<=0){timeLeft=0;gameOver('TEMPO ESGOTADO');return}
+  }
+  fallClock+=dt;
+  while(running&&fallClock>=fallMs){fallClock-=fallMs;if(free(fall.x,fall.y+1))fall.y++;else lock()}
+  if(flashTime>0)flashTime-=dt;
+  if(shake>0)shake=Math.max(0,shake-dt*.025);
+
+  particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=.00035*dt;p.life-=dt});
+  particles=particles.filter(p=>p.life>0);
+
+  // Fever slowly decays if the player does not trigger a chain.
+  if(combo===0&&fever>0)fever=Math.max(0,fever-dt*.008);
+
+  nearRecord=score>0&&best>0&&score>=best*.85&&score<best;
+}
+function loop(t){const dt=Math.min(50,t-last);last=t;tick(dt);draw();if(running)raf=requestAnimationFrame(loop)}
+
+function togglePause(){
+  if(!running)return;
+  paused=!paused;
+  pauseBtn.textContent=paused?'▶ CONTINUAR':'⏸ PAUSAR';
+  if(paused){
+    overlay.innerHTML='<div class="card"><h1>PAUSADO</h1><p>O cronômetro e a queda estão parados.</p><button class="primary" id="resume">CONTINUAR</button></div>';
+    overlay.style.display='flex';
+    document.getElementById('resume').onclick=togglePause;
+  }else{
+    overlay.style.display='none';last=performance.now();gesture=null;
+  }
+}
+
+function rr(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill()}
+function draw(){
+  if(!W||!H)return;
+  ctx.clearRect(0,0,W,H);ctx.save();
+  if(shake>0)ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
+
+  ctx.fillStyle='#020710';rr(ox-2,oy-2,C*cell+4,R*cell+4,14);
+  // Faixas discretas de monitor retrô, sem cobrir as peças.
+  ctx.fillStyle='#00dfff0b';
+  for(let y=oy+3;y<oy+R*cell;y+=6)ctx.fillRect(ox,y,C*cell,1);
+  ctx.strokeStyle='#125069';ctx.lineWidth=1;ctx.shadowColor='#00dfff';ctx.shadowBlur=2;
+  for(let c=0;c<=C;c++){ctx.beginPath();ctx.moveTo(ox+c*cell,oy);ctx.lineTo(ox+c*cell,oy+R*cell);ctx.stroke()}
+  // A linha superior foi retirada para deixar a entrada das peças aberta.
+  for(let r=1;r<=R;r++){ctx.beginPath();ctx.moveTo(ox,oy+r*cell);ctx.lineTo(ox+C*cell,oy+r*cell);ctx.stroke()}
+  ctx.shadowBlur=0;
+  for(let r=0;r<R;r++)for(let c=0;c<C;c++)if((r+c)%2===0){ctx.fillStyle='#00dfff09';ctx.fillRect(ox+c*cell+1,oy+r*cell+1,cell-2,cell-2)}
+
+  for(let r=0;r<R;r++)for(let c=0;c<C;c++)if(board[r][c]>=0)pieceDraw(board[r][c],c,r,false);
+  if(running&&!resolving){
+    let gy=fall.y;while(free(fall.x,gy+1))gy++;
+    ctx.globalAlpha=.12;pieceDraw(fall.t,fall.x,gy,false);ctx.globalAlpha=1;pieceDraw(fall.t,fall.x,fall.y,true);
+  }
+
+  const seconds=Math.max(0,Math.ceil(timeLeft));
+  const clock=`${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`;
+  ctx.textAlign='left';ctx.textBaseline='top';ctx.font='950 14px "Courier New",monospace';
+  ctx.fillStyle=mode==='arcade'?'#00e5ff':'#b6ff00';
+  ctx.fillText(mode==='arcade'?clock:'MARATONA',ox+7,oy+6);
+  ctx.textAlign='right';ctx.fillStyle='#ffe600';ctx.shadowColor='#ffe600';ctx.shadowBlur=8;ctx.font='900 11px "Courier New",monospace';
+  ctx.fillText('PRÓXIMA',ox+C*cell-7,oy+4);
+  ctx.font=`900 ${Math.max(24,Math.floor(cell*.78))}px Georgia`;
+  ctx.fillStyle=COLORS[next];ctx.shadowColor=COLORS[next];ctx.shadowBlur=12;
+  ctx.fillText(S[next],ox+C*cell-7,oy+15);
+  ctx.textBaseline='alphabetic';ctx.shadowBlur=0;
+
+  if(nearRecord){
+    ctx.save();ctx.globalAlpha=.85+.15*Math.sin(performance.now()/130);
+    ctx.font='950 10px system-ui';ctx.textAlign='center';ctx.fillStyle='#f5c451';
+    ctx.fillText('PERTO DO RECORDE',ox+C*cell/2,oy+R*cell*.92);ctx.restore();
+  }
+  if(flashTime>0){
+    ctx.save();ctx.globalAlpha=Math.min(1,flashTime/250);ctx.font='950 12px system-ui';ctx.textAlign='center';ctx.fillStyle='#f5c451';
+    ctx.fillText(flash,ox+C*cell/2,oy+R*cell*.43);ctx.restore();
+  }
+  particles.forEach(p=>{ctx.save();ctx.globalAlpha=Math.max(0,p.life/650);ctx.fillStyle=p.ch;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();ctx.restore()});
+  ctx.restore();
+}
+function pieceDraw(t,c,r,falling){
+  const x=ox+c*cell,y=oy+r*cell,p=2,color=COLORS[t];
+  ctx.fillStyle=falling?'#102a3b':'#07111d';rr(x+p,y+p,cell-2*p,cell-2*p,7);
+  ctx.strokeStyle=color;ctx.shadowColor=color;ctx.shadowBlur=falling?13:7;ctx.lineWidth=falling?2:1;ctx.stroke();
+  ctx.fillStyle=color;ctx.font=`${Math.floor(cell*.94)}px Georgia`;
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(S[t],x+cell/2,y+cell/2+1);ctx.textBaseline='alphabetic';
+  ctx.shadowBlur=0;
+}
+function spawnParticles(c,r,t,n){
+  const cx=ox+c*cell+cell/2,cy=oy+r*cell+cell/2;
+  for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=.025+Math.random()*.08;
+    particles.push({x:cx,y:cy,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:350+Math.random()*400,size:1.2+Math.random()*2.5,ch:COLORS[t]});
+  }
+}
+function setMode(m){
+  if(running)return;
+  mode=m;arcadeBtn.classList.toggle('active',m==='arcade');marathonBtn.classList.toggle('active',m==='marathon');
+  help.textContent=m==='arcade'?'ARCADE · 60s · fusões e linhas pontuam':'MARATONA · fusões e linhas pontuam; 10 linhas = novo nível';
+  startBtn.textContent=m==='arcade'?'COMEÇAR ARCADE':'COMEÇAR MARATONA';
+}
+arcadeBtn.onclick=()=>setMode('arcade');marathonBtn.onclick=()=>setMode('marathon');startBtn.onclick=start;
+pauseBtn.onclick=togglePause;
+document.getElementById('left').onclick=()=>move(-1);document.getElementById('right').onclick=()=>move(1);document.getElementById('drop').onclick=hard;
+
+let gesture=null;
+canvas.addEventListener('pointerdown',e=>{
+ if(!running||paused||resolving||gesture)return;
+ gesture={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointerup',e=>{
+ if(!gesture||e.pointerId!==gesture.id)return;
+ const g=gesture;gesture=null;const dx=e.clientX-g.x,dy=e.clientY-g.y;
+ if(dy>30&&dy>Math.abs(dx)){hard();return}
+ if(Math.abs(dx)>20){move(dx>0?1:-1);return}
+ const q=canvas.getBoundingClientRect(),col=Math.floor((e.clientX-q.left)/q.width*C);
+ if(col<fall.x)move(-1);else if(col>fall.x)move(1);else hard();
+});
+canvas.addEventListener('pointercancel',()=>gesture=null);
+document.addEventListener('visibilitychange',()=>{last=performance.now();gesture=null});
+document.getElementById('fullscreen').onclick=async()=>{
+ try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen()}
+ catch{help.textContent='Tela cheia indisponível neste navegador.'}resize();
+};
+document.addEventListener('fullscreenchange',resize);
+window.addEventListener('keydown',e=>{
+  if((e.key==='p'||e.key==='P'||e.key==='Escape')&&running){e.preventDefault();togglePause();return}
+  if(e.key==='ArrowLeft'){e.preventDefault();move(-1)}
+  else if(e.key==='ArrowRight'){e.preventDefault();move(1)}
+  else if(e.key==='ArrowDown'||e.code==='Space'){e.preventDefault();if(!e.repeat)hard()}
+});
+setMode('arcade');resize();
+})();
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
